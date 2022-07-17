@@ -1,32 +1,39 @@
 import { NextFunction, Request, Response, Router } from "express";
+import userRepository from "../repositories/user.repository";
 
 const usersRoute = Router();
 
-usersRoute.get('/users', (req: Request, res: Response, next: NextFunction) => {
-  const users = [{ userName: "Kevin" }];
-  res.status(200).send({ users })
+usersRoute.get('/users', async (req: Request, res: Response, next: NextFunction) => {
+  const users = await userRepository.findAllUsers();
+  res.status(200).send({ users });
 })
 
-usersRoute.get('/users/:uuid', (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
+usersRoute.get('/users/:uuid', async (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
   const uuid = req.params.uuid;
-  res.status(200).send({ uuid })
+  const user = await userRepository.findById(uuid);
+  res.status(200).send(user)
 })
 
-usersRoute.post('/users', (req: Request, res: Response, next: NextFunction) => {
+usersRoute.post('/users', async (req: Request, res: Response, next: NextFunction) => {
   const newUser = req.body
-  console.log(newUser)
-  res.status(201).send(newUser)
+  const uuid = await userRepository.create(newUser);
+  res.status(201).send(uuid)
 })
 
-usersRoute.put('/users/:uuid', (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
+usersRoute.put('/users/:uuid', async(req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
   const uuid = req.params.uuid;
-  res.status(200).send({ uuid });
+  const modifiedUser = req.body;
+
+  modifiedUser.uuid = uuid;
+
+  await userRepository.update(modifiedUser)
+  res.status(200).send(modifiedUser);
 })
 
-usersRoute.delete('/users/:uuid', (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
+usersRoute.delete('/users/:uuid', async (req: Request<{ uuid: string }>, res: Response, next: NextFunction) => {
   const uuid = req.params.uuid;
-
-  res.status(200).send("ok")
+  await userRepository.remove(uuid);
+  res.status(200).send("ok");
 })
 
 export default usersRoute;
